@@ -5,11 +5,11 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from . import serializers
 from .models import Auction, Bid
 from .permissions import AuctionOwnerPermission, BidOwnerPermission
-from .serializers import AuctionSerializer, BidSerializer, AuctionSummarySerializer, LoginSerializer
+from .serializers import AuctionSerializer, BidSerializer, AuctionSummarySerializer, LoginSerializer, ProfileSerializer, \
+    RegisterSerializer
 from rest_framework import generics
 from django.contrib.auth.models import User
 from rest_framework.permissions import AllowAny
-from rest_framework.serializers import ModelSerializer
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate, login
@@ -50,22 +50,14 @@ class AuctionViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_update(self, serializer):
-        # Sprawdzamy, czy użytkownik jest właścicielem aukcji
         if self.get_object().owner != self.request.user:
             raise PermissionDenied("You cannot edit someone else's auction.")
         serializer.save()
 
     def perform_destroy(self, instance):
-        # Sprawdzamy, czy użytkownik jest właścicielem aukcji
         if instance.owner != self.request.user:
             raise PermissionDenied("You cannot delete someone else's auction.")
         instance.delete()
-
-    @action(detail=False, methods=['get'], url_path='my-auctions')
-    def my_auctions(self, request):
-        auctions = Auction.objects.filter(owner=request.user)
-        serializer = self.get_serializer(auctions, many=True)
-        return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='my-auctions')
     def my_auctions(self, request):
@@ -131,18 +123,6 @@ class BidViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(bids, many=True)
         return Response(serializer.data)
 
-
-
-class RegisterSerializer(ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
-
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -199,7 +179,7 @@ class LogoutView(APIView):
         return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
 
 class MyProfileView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = RegisterSerializer
+    serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):

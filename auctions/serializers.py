@@ -1,7 +1,11 @@
 from datetime import timedelta
+
+from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer
+
 from .models import Auction, Bid
 
 
@@ -98,3 +102,21 @@ class LoginSerializer(serializers.Serializer):
 
     class Meta:
         fields = '__all__'
+
+User = get_user_model()
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password']
+        read_only_fields = ['id', 'username', 'password']
+
+class RegisterSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
