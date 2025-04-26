@@ -1,42 +1,54 @@
-# System Aukcyjny - API REST
-
-## Opis
-System aukcyjny zbudowany w oparciu o Django REST Framework, umożliwiający użytkownikom tworzenie aukcji i licytowanie przedmiotów.
-
+# System Aukcyjny Django REST API
+## Opis Projektu
+System aukcyjny zbudowany przy użyciu Django REST Framework, umożliwiający użytkownikom tworzenie i uczestniczenie w aukcjach online.
 ## Funkcjonalności
 - Tworzenie i zarządzanie aukcjami
-- System licytacji
-- Historia ofert
-- Automatyczne zamykanie aukcji
-- Wyłanianie zwycięzcy aukcji
+- System licytacji w czasie rzeczywistym
+- Automatyczne zamykanie zakończonych aukcji (wykorzystanie Celery)
+- Pełne API REST
+- System użytkowników z autentykacją
 
-## Wymagania techniczne
-- Python 3.9+
-- PostgreSQL
-- Pozostałe zależności w pliku requirements.txt
+## Modele Danych
+### Auction (Aukcja)
+- Tytuł
+- Opis
+- Cena wywoławcza
+- Data utworzenia
+- Data zakończenia
+- Najwyższa oferta
+- Status (otwarta/zamknięta)
+- Właściciel
+- Zwycięzca aukcji
+
+### Bid (Oferta)
+- Kwota
+- Data złożenia
+- Powiązanie z aukcją
+- Powiązanie z użytkownikiem
+
+## Wymagania Techniczne
+- Python 3.x
+- Django 5.2
+- Django REST Framework
+- Celery (do zadań asynchronicznych)
+- PostgreSQL/SQLite (baza danych)
 
 ## Instalacja
 1. Sklonuj repozytorium:
-```bash
-git clone [adres-repo]
+``` bash
+git clone [adres-repozytorium]
 ```
-1. Utwórz i aktywuj wirtualne środowisko:
+1. Utwórz i aktywuj środowisko wirtualne:
 ``` bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
+.\venv\Scripts\activate   # Windows
 ```
 1. Zainstaluj zależności:
 ``` bash
 pip install -r requirements.txt
 ```
-1. Utwórz plik .env i skonfiguruj zmienne środowiskowe:
-```
-DEBUG=True
-SECRET_KEY=twoj-tajny-klucz
-DATABASE_URL=postgresql://user:password@localhost:5432/auctions
-```
-1. Wykonaj migracje:
+1. Wykonaj migracje bazy danych:
 ``` bash
 python manage.py migrate
 ```
@@ -44,67 +56,13 @@ python manage.py migrate
 ``` bash
 python manage.py runserver
 ```
-## Struktura projektu
-```
-auctions/
-├── auctions/           # Główna aplikacja
-│   ├── models.py       # Modele danych
-│   ├── serializers.py  # Serializatory DRF
-│   ├── views.py        # Widoki API
-│   └── tests/          # Testy
-├── manage.py
-└── requirements.txt
-```
-## API Endpoints
-- `POST /api/auctions/` - Tworzenie nowej aukcji
-- `GET /api/auctions/` - Lista wszystkich aukcji
-- `GET /api/auctions/{id}/` - Szczegóły aukcji
-- `POST /api/bids/` - Składanie oferty
-- `GET /api/bids/` - Historia ofert
-
-## Testy
-Uruchomienie testów:
+## Użycie
+### Uruchomienie Celery
+Aby uruchomić workera Celery:
 ``` bash
-pytest
+celery -A django_REST_API_auction_house worker -l info
 ```
-Sprawdzenie pokrycia testami:
+Aby uruchomić harmonogram zadań Celery:
 ``` bash
-coverage run -m pytest
-coverage report
-```
-## Kontrybucja
-1. Utwórz fork repozytorium
-2. Utwórz branch z nową funkcjonalnością
-3. Wykonaj commit zmian
-4. Wyślij pull request
-
-## Licencja
-MIT
-## Autor
-Ernest Zduńczyk
-## Status projektu
-W aktywnym rozwoju
-```
-
-Powyższe pliki zawierają:
-
-**requirements.txt:**
-- Podstawowe zależności potrzebne do uruchomienia projektu Django z REST framework
-- Narzędzia do testowania (pytest, coverage)
-- Narzędzia do formatowania kodu (black, flake8)
-- Dodatkowe użyteczne biblioteki (drf-spectacular, django-filter)
-
-**README.md:**
-- Pełny opis projektu i jego funkcjonalności
-- Instrukcje instalacji i konfiguracji
-- Opis struktury projektu
-- Dokumentację API
-- Instrukcje dotyczące testów
-- Informacje o kontrybucji i licencji
-
-Należy uzupełnić:
-1. Adres repozytorium w instrukcji klonowania
-2. Dokładne dane autora/zespołu
-3. Szczegółowe informacje o licencji jeśli różni się od MIT
-4. Ewentualne dodatkowe wymagania specyficzne dla projektu
+celery -A django_REST_API_auction_house beat -l info
 ```
