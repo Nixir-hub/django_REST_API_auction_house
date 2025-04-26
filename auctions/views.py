@@ -1,7 +1,7 @@
 # auctions/views.py
 from django.utils import timezone
 from rest_framework import viewsets, permissions, status
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from . import serializers
 from .models import Auction, Bid
 from .permissions import AuctionOwnerPermission, BidOwnerPermission
@@ -143,6 +143,11 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            raise ValidationError("You are already logged in. Cannot register again.")
+        return super().create(request, *args, **kwargs)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
