@@ -38,8 +38,7 @@ class Auction(models.Model):
                 self.save()
 
     def save(self, *args, **kwargs):
-        # If the auction is being created, set the highest_bid to the starting price
-        if not self.id:  # Only when the auction is being created (not updated)
+        if not self.id:
             self.highest_bid = self.starting_price
         if self.ends_at and timezone.now() >= self.ends_at:
             self.is_closed = True
@@ -55,7 +54,6 @@ class Bid(models.Model):
         ordering = ['-amount']
 
     def clean(self):
-        # Sprawdzamy, czy oferta jest większa niż aktualna najwyższa oferta
         if self.auction.ends_at < timezone.now():
             raise ValidationError("Bidding is no longer allowed. The auction has ended.")
         if self.amount <= self.auction.highest_bid:
@@ -65,10 +63,9 @@ class Bid(models.Model):
         return f"{self.user.username} - {self.amount}"
 
     def save(self, *args, **kwargs):
-        # Zanim oferta zostanie zapisana, sprawdzamy walidację
         self.clean()
 
-        # Jeżeli oferta jest większa niż dotychczasowa najwyższa, aktualizujemy ją w aukcji
+
         if self.amount > self.auction.highest_bid:
             self.auction.highest_bid = self.amount
             self.auction.save()

@@ -88,7 +88,6 @@ class BidViewSet(viewsets.ModelViewSet):
         if serializer.validated_data['amount'] <= auction.highest_bid:
             raise serializers.ValidationError("The bid must be higher than the current highest bid.")
 
-        # Wszystko OK — zapisujemy
         serializer.save(user=self.request.user)
 
     def update(self, request, *args, **kwargs):
@@ -169,7 +168,6 @@ class LoginView(APIView):
         username = request.data.get('username')
         password = request.data.get('password')
 
-        # Sprawdzenie, czy użytkownik jest już zalogowany
         if request.user.is_authenticated:
             return Response({"detail": "User already logged in."}, status=status.HTTP_400_BAD_REQUEST)
 
