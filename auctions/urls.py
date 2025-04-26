@@ -3,7 +3,7 @@
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import AuctionViewSet, BidViewSet, RegisterView, current_user_view, LoginView, LogoutView
+from .views import AuctionViewSet, BidViewSet, RegisterView, current_user_view, LoginView, LogoutView, MyProfileView
 
 router = DefaultRouter()
 router.register(r'auctions', AuctionViewSet, basename='auction')
@@ -14,6 +14,6 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('', include(router.urls)),
     path('register/', RegisterView.as_view(), name='register'),
-    path('me/', current_user_view, name='current-user'),
+    path('me/', MyProfileView.as_view(), name='my-profile'),
     path('api-auth/', include('rest_framework.urls')),  # for session login/logout UI
 ]

@@ -30,8 +30,10 @@ class AuctionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         params = self.request.query_params
+
         for auction in queryset:
             auction.close_if_expired()
+
         # Filter by 'mine=true'
         if params.get('mine') == 'true' and self.request.user.is_authenticated:
             queryset = queryset.filter(owner=self.request.user)
@@ -47,14 +49,17 @@ class AuctionViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def update(self, request, *args, **kwargs):
-        raise PermissionDenied("Editing auctions is not allowed.")
+    def perform_update(self, serializer):
+        # Sprawdzamy, czy użytkownik jest właścicielem aukcji
+        if self.get_object().owner != self.request.user:
+            raise PermissionDenied("You cannot edit someone else's auction.")
+        serializer.save()
 
-    def partial_update(self, request, *args, **kwargs):
-        raise PermissionDenied("Editing auctions is not allowed.")
-
-    def destroy(self, request, *args, **kwargs):
-        raise PermissionDenied("Deleting auctions is not allowed.")
+    def perform_destroy(self, instance):
+        # Sprawdzamy, czy użytkownik jest właścicielem aukcji
+        if instance.owner != self.request.user:
+            raise PermissionDenied("You cannot delete someone else's auction.")
+        instance.delete()
 
     @action(detail=False, methods=['get'], url_path='my-auctions')
     def my_auctions(self, request):
@@ -192,3 +197,10 @@ class LogoutView(APIView):
 
         logout(request)  # Wyczyść sesję
         return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
+
+class MyProfileView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
