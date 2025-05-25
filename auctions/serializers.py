@@ -1,10 +1,10 @@
 from datetime import timedelta
+from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer
 from .models import Auction, Bid
-
-
 
 
 class BidSerializer(serializers.ModelSerializer):
@@ -32,6 +32,11 @@ class BidSerializer(serializers.ModelSerializer):
             raise ValidationError("This auction is closed. You can't place a bid.")
 
         return attrs
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Bid amount must be greater than zero.")
+        return value
 
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
@@ -68,6 +73,11 @@ class AuctionSerializer(serializers.ModelSerializer):
                 })
         return data
 
+    def validate_starting_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Starting price must be greater than zero.")
+        return value
+
 
 class AuctionSummarySerializer(serializers.ModelSerializer):
     highest_bid = serializers.SerializerMethodField()
@@ -92,9 +102,31 @@ class AuctionSummarySerializer(serializers.ModelSerializer):
             return highest_bid.user.username if highest_bid else None
         return None
 
+
+
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(style={'input_type': 'password'})
 
     class Meta:
         fields = '__all__'
+
+User = get_user_model()
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password']
+        read_only_fields = ['id', 'username', 'password']
+
+
+class RegisterSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
